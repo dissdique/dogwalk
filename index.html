@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=600, height=600, initial-scale=1.0, user-scalable=no">
+<meta name="description" content="Shows local temperature + humidity as a mood dog for Meta Ray-Ban Display">
+<meta name="mrbd-web-app-capable" content="yes">
+<title>Dog Weather Index</title>
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 600px;
+    height: 600px;
+    overflow: hidden;
+    background: #000000; /* pure black = transparent on additive display */
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color: #e8fbff;
+  }
+
+  #app {
+    width: 600px;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 24px;
+  }
+
+  #status {
+    font-size: 20px;
+    letter-spacing: 0.5px;
+    color: #7fdcff;
+    margin-bottom: 8px;
+    min-height: 26px;
+    text-align: center;
+  }
+
+  #sum-value {
+    font-size: 96px;
+    font-weight: 700;
+    line-height: 1;
+    margin: 4px 0 2px 0;
+    text-shadow: 0 0 18px currentColor;
+  }
+
+  #sum-label {
+    font-size: 18px;
+    color: #9fe8ff;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  #breakdown {
+    font-size: 18px;
+    color: #bff2ff;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  #dog-wrap {
+    width: 280px;
+    height: 280px;
+  }
+
+  .focusable {
+    transition: all 150ms ease;
+    border: 2px solid transparent;
+    background: transparent;
+    color: #e8fbff;
+    font-size: 20px;
+    padding: 14px 28px;
+    min-height: 88px;
+    border-radius: 12px;
+    margin-top: 14px;
+  }
+
+  .focusable:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="status">Locating weather…</div>
+  <div id="sum-value" style="display:none;">--</div>
+  <div id="sum-label" style="display:none;">Temp + Humidity Index (°F + %)</div>
+  <div id="breakdown" style="display:none;"></div>
+  <div id="dog-wrap" style="display:none;"></div>
+
+  <button id="retry-btn" class="focusable hidden">Retry</button>
+
+</div>
+
+<script>
+(function () {
+  var statusEl = document.getElementById('status');
+  var sumEl = document.getElementById('sum-value');
+  var labelEl = document.getElementById('sum-label');
+  var breakdownEl = document.getElementById('breakdown');
+  var dogWrap = document.getElementById('dog-wrap');
+  var retryBtn = document.getElementById('retry-btn');
+
+  // ---- D-pad / focus support (per MRBD input model) ----
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      if (document.activeElement === retryBtn) {
+        retryBtn.click();
+      }
+    }
+    e.preventDefault();
+  });
+
+  function showRetry() {
+    retryBtn.classList.remove('hidden');
+    retryBtn.focus();
+  }
+
+  retryBtn.addEventListener('click', function () {
+    retryBtn.classList.add('hidden');
+    start();
+  });
+
+  // ---- Dog SVGs (drawn from scratch, three moods) ----
+  function dogSVG(mood) {
+    var colors = {
+      green:  { fur: '#33ff8c', dark: '#0a3d24', mouth: '#0a3d24' },
+      yellow: { fur: '#ffe23d', dark: '#4d3f05', mouth: '#4d3f05' },
+      red:    { fur: '#ff4d4d', dark: '#4d0a0a', mouth: '#4d0a0a' }
+    };
+    var c = colors[mood];
+
+    var mouthPath, extras = '';
+
+    if (mood === 'green') {
+      // smiling open curve
+      mouthPath = 'M 95 155 Q 140 195 185 155';
+    } else if (mood === 'yellow') {
+      // flat / neutral line
+      mouthPath = 'M 100 165 Q 140 168 180 165';
+    } else {
+      // frown
+      mouthPath = 'M 95 175 Q 140 145 185 175';
+      // tears
+      extras =
+        '<ellipse cx="88" cy="140" rx="7" ry="14" fill="#5ec8ff" opacity="0.9"/>' +
+        '<ellipse cx="88" cy="158" rx="5" ry="9" fill="#5ec8ff" opacity="0.7"/>' +
+        '<ellipse cx="192" cy="140" rx="7" ry="14" fill="#5ec8ff" opacity="0.9"/>' +
+        '<ellipse cx="192" cy="158" rx="5" ry="9" fill="#5ec8ff" opacity="0.7"/>';
+    }
+
+    return (
+      '<svg viewBox="0 0 280 280" width="280" height="280" xmlns="http://www.w3.org/2000/svg">' +
+        // ears
+        '<path d="M 40 60 L 90 100 L 60 130 Z" fill="' + c.fur + '"/>' +
+        '<path d="M 240 60 L 190 100 L 220 130 Z" fill="' + c.fur + '"/>' +
+        // head
+        '<circle cx="140" cy="140" r="95" fill="' + c.fur + '"/>' +
+        // snout
+        '<ellipse cx="140" cy="175" rx="55" ry="40" fill="' + c.fur + '" opacity="0.85"/>' +
+        // eyes
+        '<circle cx="105" cy="120" r="10" fill="' + c.dark + '"/>' +
+        '<circle cx="175" cy="120" r="10" fill="' + c.dark + '"/>' +
+        // nose
+        '<ellipse cx="140" cy="150" rx="14" ry="10" fill="' + c.dark + '"/>' +
+        // mouth
+        '<path d="' + mouthPath + '" stroke="' + c.mouth + '" stroke-width="6" fill="none" stroke-linecap="round"/>' +
+        extras +
+      '</svg>'
+    );
+  }
+
+  function moodForSum(sum) {
+    if (sum < 150) return 'green';
+    if (sum <= 160) return 'yellow';
+    return 'red';
+  }
+
+  function render(tempF, humidity) {
+    var sum = Math.round(tempF + humidity);
+    var mood = moodForSum(sum);
+    var colorMap = { green: '#33ff8c', yellow: '#ffe23d', red: '#ff4d4d' };
+
+    statusEl.style.display = 'none';
+
+    sumEl.style.display = 'block';
+    sumEl.style.color = colorMap[mood];
+    sumEl.textContent = sum;
+
+    labelEl.style.display = 'block';
+
+    breakdownEl.style.display = 'block';
+    breakdownEl.textContent =
+      Math.round(tempF) + '°F temp + ' + Math.round(humidity) + '% humidity';
+
+    dogWrap.style.display = 'block';
+    dogWrap.innerHTML = dogSVG(mood);
+  }
+
+  function fetchWeather(lat, lon) {
+    statusEl.textContent = 'Fetching weather…';
+
+    var url =
+      'https://api.open-meteo.com/v1/forecast?latitude=' + lat +
+      '&longitude=' + lon +
+      '&current=temperature_2m,relative_humidity_2m' +
+      '&temperature_unit=fahrenheit';
+
+    fetch(url)
+      .then(function (res) {
+        if (!res.ok) throw new Error('Weather request failed');
+        return res.json();
+      })
+      .then(function (data) {
+        var cur = data.current;
+        if (!cur) throw new Error('No current weather in response');
+        render(cur.temperature_2m, cur.relative_humidity_2m);
+      })
+      .catch(function (err) {
+        statusEl.textContent = 'Weather unavailable. Try again.';
+        showRetry();
+      });
+  }
+
+  function start() {
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'Locating weather…';
+    sumEl.style.display = 'none';
+    labelEl.style.display = 'none';
+    breakdownEl.style.display = 'none';
+    dogWrap.style.display = 'none';
+
+    if (!('geolocation' in navigator)) {
+      statusEl.textContent = 'Location not supported.';
+      showRetry();
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      function (position) {
+        fetchWeather(position.coords.latitude, position.coords.longitude);
+      },
+      function (error) {
+        var msg = 'Location unavailable.';
+        if (error.code === 1) msg = 'Location permission denied.';
+        else if (error.code === 3) msg = 'Location request timed out.';
+        statusEl.textContent = msg;
+        showRetry();
+      },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
+    );
+  }
+
+  start();
+})();
+</script>
+</body>
+</html>
