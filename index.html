@@ -22,14 +22,93 @@
   #app {
     width: 600px;
     height: 600px;
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  .screen {
+    width: 600px;
+    height: 600px;
+    box-sizing: border-box;
+    padding: 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    box-sizing: border-box;
-    padding: 24px;
   }
 
+  .hidden { display: none !important; }
+
+  .title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #7fdcff;
+    margin-bottom: 28px;
+    text-align: center;
+  }
+
+  /* ---- Buttons ---- */
+  .focusable {
+    transition: all 150ms ease;
+    border: 2px solid transparent;
+    background: transparent;
+    color: #e8fbff;
+    font-size: 20px;
+    border-radius: 12px;
+  }
+
+  .focusable:focus {
+    outline: none;
+    border-color: #00d4ff;
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+  }
+
+  .big-btn {
+    width: 420px;
+    min-height: 88px;
+    margin-bottom: 20px;
+    font-size: 22px;
+  }
+
+  /* ---- Keypad screen ---- */
+  #zip-display {
+    font-size: 40px;
+    letter-spacing: 10px;
+    color: #9fe8ff;
+    margin-bottom: 6px;
+    min-height: 50px;
+    text-align: center;
+  }
+
+  #zip-error {
+    font-size: 16px;
+    color: #ff8a8a;
+    min-height: 20px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  .keypad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 160px);
+    grid-auto-rows: 64px;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .key {
+    width: 160px;
+    min-height: 64px;
+    font-size: 24px;
+  }
+
+  #kBack {
+    width: 200px;
+    min-height: 56px;
+    font-size: 18px;
+  }
+
+  /* ---- Status / result screen ---- */
   #status {
     font-size: 20px;
     letter-spacing: 0.5px;
@@ -40,7 +119,7 @@
   }
 
   #sum-value {
-    font-size: 96px;
+    font-size: 88px;
     font-weight: 700;
     line-height: 1;
     margin: 4px 0 2px 0;
@@ -50,7 +129,7 @@
   #sum-label {
     font-size: 18px;
     color: #9fe8ff;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     text-align: center;
   }
 
@@ -61,72 +140,193 @@
     text-align: center;
   }
 
+  #location-label {
+    font-size: 15px;
+    color: #6fb8cc;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
   #dog-wrap {
-    width: 280px;
-    height: 280px;
+    width: 240px;
+    height: 240px;
+    margin-bottom: 10px;
   }
 
-  .focusable {
-    transition: all 150ms ease;
-    border: 2px solid transparent;
-    background: transparent;
-    color: #e8fbff;
-    font-size: 20px;
-    padding: 14px 28px;
-    min-height: 88px;
-    border-radius: 12px;
-    margin-top: 14px;
+  #status-buttons {
+    display: flex;
+    gap: 12px;
   }
 
-  .focusable:focus {
-    outline: none;
-    border-color: #00d4ff;
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+  #status-buttons .focusable {
+    min-height: 64px;
+    padding: 12px 20px;
+    font-size: 18px;
   }
-
-  .hidden { display: none; }
 </style>
 </head>
 <body>
 <div id="app">
 
-  <div id="status">Locating weather…</div>
-  <div id="sum-value" style="display:none;">--</div>
-  <div id="sum-label" style="display:none;">Temp + Humidity Index (°F + %)</div>
-  <div id="breakdown" style="display:none;"></div>
-  <div id="dog-wrap" style="display:none;"></div>
+  <!-- Screen 1: choose location method -->
+  <div id="screen-choice" class="screen">
+    <div class="title">Dog Weather Index</div>
+    <button class="focusable big-btn" id="btn-mylocation">Use My Location</button>
+    <button class="focusable big-btn" id="btn-zip">Enter ZIP Code</button>
+  </div>
 
-  <button id="retry-btn" class="focusable hidden">Retry</button>
+  <!-- Screen 2: on-screen numeric keypad (no system text input on MRBD) -->
+  <div id="screen-keypad" class="screen hidden">
+    <div class="title">Enter ZIP Code</div>
+    <div id="zip-display">_ _ _ _ _</div>
+    <div id="zip-error">&nbsp;</div>
+    <div class="keypad-grid">
+      <button class="focusable key" id="k1">1</button>
+      <button class="focusable key" id="k2">2</button>
+      <button class="focusable key" id="k3">3</button>
+      <button class="focusable key" id="k4">4</button>
+      <button class="focusable key" id="k5">5</button>
+      <button class="focusable key" id="k6">6</button>
+      <button class="focusable key" id="k7">7</button>
+      <button class="focusable key" id="k8">8</button>
+      <button class="focusable key" id="k9">9</button>
+      <button class="focusable key" id="kDel">⌫</button>
+      <button class="focusable key" id="k0">0</button>
+      <button class="focusable key" id="kSubmit">✓</button>
+    </div>
+    <button class="focusable" id="kBack">Back</button>
+  </div>
+
+  <!-- Screen 3: status / result -->
+  <div id="screen-status" class="screen hidden">
+    <div id="status">Locating weather…</div>
+    <div id="sum-value" style="display:none;">--</div>
+    <div id="sum-label" style="display:none;">Temp + Humidity Index (°F + %)</div>
+    <div id="breakdown" style="display:none;"></div>
+    <div id="location-label" style="display:none;"></div>
+    <div id="dog-wrap" style="display:none;"></div>
+    <div id="status-buttons">
+      <button id="retry-btn" class="focusable hidden">Retry</button>
+      <button id="change-location-btn" class="focusable hidden">Change Location</button>
+    </div>
+  </div>
 
 </div>
 
 <script>
 (function () {
+  var screens = {
+    choice: document.getElementById('screen-choice'),
+    keypad: document.getElementById('screen-keypad'),
+    status: document.getElementById('screen-status')
+  };
+  var currentScreen = 'choice';
+
   var statusEl = document.getElementById('status');
   var sumEl = document.getElementById('sum-value');
   var labelEl = document.getElementById('sum-label');
   var breakdownEl = document.getElementById('breakdown');
+  var locationLabelEl = document.getElementById('location-label');
   var dogWrap = document.getElementById('dog-wrap');
   var retryBtn = document.getElementById('retry-btn');
+  var changeLocationBtn = document.getElementById('change-location-btn');
 
-  // ---- D-pad / focus support (per MRBD input model) ----
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') {
-      if (document.activeElement === retryBtn) {
-        retryBtn.click();
+  var zipDisplay = document.getElementById('zip-display');
+  var zipError = document.getElementById('zip-error');
+  var zipDigits = '';
+
+  function showScreen(name) {
+    Object.keys(screens).forEach(function (key) {
+      if (key === name) {
+        screens[key].classList.remove('hidden');
+      } else {
+        screens[key].classList.add('hidden');
       }
-    }
-    e.preventDefault();
-  });
-
-  function showRetry() {
-    retryBtn.classList.remove('hidden');
-    retryBtn.focus();
+    });
+    currentScreen = name;
+    // Focus the first focusable element in the new screen
+    var first = screens[name].querySelector('.focusable:not(.hidden):not([disabled])');
+    if (first) first.focus();
   }
 
-  retryBtn.addEventListener('click', function () {
-    retryBtn.classList.add('hidden');
-    start();
+  function activeScreenEl() {
+    return screens[currentScreen];
+  }
+
+  // ---- Linear focus navigation (choice screen, status screen) ----
+  function moveFocusLinear(direction) {
+    var container = activeScreenEl();
+    var focusables = Array.from(
+      container.querySelectorAll('.focusable:not([disabled]):not(.hidden)')
+    );
+    if (!focusables.length) return;
+
+    var idx = focusables.indexOf(document.activeElement);
+    if (idx === -1) { focusables[0].focus(); return; }
+
+    var next = (direction === 'up' || direction === 'left')
+      ? (idx > 0 ? idx - 1 : focusables.length - 1)
+      : (idx < focusables.length - 1 ? idx + 1 : 0);
+
+    focusables[next].focus();
+  }
+
+  // ---- Grid focus navigation (keypad screen) ----
+  var keypadNeighbors = {
+    k1:      { up: 'kBack', down: 'k4', left: 'k3', right: 'k2' },
+    k2:      { up: 'kBack', down: 'k5', left: 'k1', right: 'k3' },
+    k3:      { up: 'kBack', down: 'k6', left: 'k2', right: 'k1' },
+    k4:      { up: 'k1',    down: 'k7', left: 'k6', right: 'k5' },
+    k5:      { up: 'k2',    down: 'k8', left: 'k4', right: 'k6' },
+    k6:      { up: 'k3',    down: 'k9', left: 'k5', right: 'k4' },
+    k7:      { up: 'k4',    down: 'kDel', left: 'k9', right: 'k8' },
+    k8:      { up: 'k5',    down: 'k0',   left: 'k7', right: 'k9' },
+    k9:      { up: 'k6',    down: 'kSubmit', left: 'k8', right: 'k7' },
+    kDel:    { up: 'k7',    down: 'kBack', left: 'kSubmit', right: 'k0' },
+    k0:      { up: 'k8',    down: 'kBack', left: 'kDel', right: 'kSubmit' },
+    kSubmit: { up: 'k9',    down: 'kBack', left: 'k0', right: 'kDel' },
+    kBack:   { up: 'kSubmit', down: 'k1', left: 'kBack', right: 'kBack' }
+  };
+
+  function moveFocusGrid(direction) {
+    var currentId = document.activeElement ? document.activeElement.id : null;
+    var map = keypadNeighbors[currentId];
+    if (!map) {
+      var first = document.getElementById('k1');
+      if (first) first.focus();
+      return;
+    }
+    var nextId = map[direction];
+    if (nextId) {
+      var el = document.getElementById(nextId);
+      if (el) el.focus();
+    }
+  }
+
+  // ---- D-pad Listener ----
+  document.addEventListener('keydown', function (e) {
+    var dir = null;
+    switch (e.key) {
+      case 'ArrowUp':    dir = 'up';    break;
+      case 'ArrowDown':  dir = 'down';  break;
+      case 'ArrowLeft':  dir = 'left';  break;
+      case 'ArrowRight': dir = 'right'; break;
+      case 'Enter':
+        if (document.activeElement && document.activeElement.classList.contains('focusable')) {
+          document.activeElement.click();
+        }
+        e.preventDefault();
+        return;
+      default:
+        return; // don't preventDefault on unhandled keys
+    }
+
+    if (currentScreen === 'keypad') {
+      moveFocusGrid(dir);
+    } else {
+      moveFocusLinear(dir);
+    }
+    e.preventDefault();
   });
 
   // ---- Dog SVGs (drawn from scratch, three moods) ----
@@ -137,19 +337,14 @@
       red:    { fur: '#ff4d4d', dark: '#4d0a0a', mouth: '#4d0a0a' }
     };
     var c = colors[mood];
-
     var mouthPath, extras = '';
 
     if (mood === 'green') {
-      // smiling open curve
       mouthPath = 'M 95 155 Q 140 195 185 155';
     } else if (mood === 'yellow') {
-      // flat / neutral line
       mouthPath = 'M 100 165 Q 140 168 180 165';
     } else {
-      // frown
       mouthPath = 'M 95 175 Q 140 145 185 175';
-      // tears
       extras =
         '<ellipse cx="88" cy="140" rx="7" ry="14" fill="#5ec8ff" opacity="0.9"/>' +
         '<ellipse cx="88" cy="158" rx="5" ry="9" fill="#5ec8ff" opacity="0.7"/>' +
@@ -158,20 +353,14 @@
     }
 
     return (
-      '<svg viewBox="0 0 280 280" width="280" height="280" xmlns="http://www.w3.org/2000/svg">' +
-        // ears
+      '<svg viewBox="0 0 280 280" width="240" height="240" xmlns="http://www.w3.org/2000/svg">' +
         '<path d="M 40 60 L 90 100 L 60 130 Z" fill="' + c.fur + '"/>' +
         '<path d="M 240 60 L 190 100 L 220 130 Z" fill="' + c.fur + '"/>' +
-        // head
         '<circle cx="140" cy="140" r="95" fill="' + c.fur + '"/>' +
-        // snout
         '<ellipse cx="140" cy="175" rx="55" ry="40" fill="' + c.fur + '" opacity="0.85"/>' +
-        // eyes
         '<circle cx="105" cy="120" r="10" fill="' + c.dark + '"/>' +
         '<circle cx="175" cy="120" r="10" fill="' + c.dark + '"/>' +
-        // nose
         '<ellipse cx="140" cy="150" rx="14" ry="10" fill="' + c.dark + '"/>' +
-        // mouth
         '<path d="' + mouthPath + '" stroke="' + c.mouth + '" stroke-width="6" fill="none" stroke-linecap="round"/>' +
         extras +
       '</svg>'
@@ -184,7 +373,7 @@
     return 'red';
   }
 
-  function render(tempF, humidity) {
+  function render(tempF, humidity, locationText) {
     var sum = Math.round(tempF + humidity);
     var mood = moodForSum(sum);
     var colorMap = { green: '#33ff8c', yellow: '#ffe23d', red: '#ff4d4d' };
@@ -201,13 +390,47 @@
     breakdownEl.textContent =
       Math.round(tempF) + '°F temp + ' + Math.round(humidity) + '% humidity';
 
+    if (locationText) {
+      locationLabelEl.style.display = 'block';
+      locationLabelEl.textContent = locationText;
+    }
+
     dogWrap.style.display = 'block';
     dogWrap.innerHTML = dogSVG(mood);
+
+    retryBtn.classList.add('hidden');
+    changeLocationBtn.classList.remove('hidden');
+    changeLocationBtn.focus();
   }
 
-  function fetchWeather(lat, lon) {
+  function resetStatusScreen() {
+    statusEl.style.display = 'block';
     statusEl.textContent = 'Fetching weather…';
+    sumEl.style.display = 'none';
+    labelEl.style.display = 'none';
+    breakdownEl.style.display = 'none';
+    locationLabelEl.style.display = 'none';
+    dogWrap.style.display = 'none';
+    retryBtn.classList.add('hidden');
+    changeLocationBtn.classList.add('hidden');
+  }
 
+  function showError(message) {
+    statusEl.style.display = 'block';
+    statusEl.textContent = message;
+    sumEl.style.display = 'none';
+    labelEl.style.display = 'none';
+    breakdownEl.style.display = 'none';
+    locationLabelEl.style.display = 'none';
+    dogWrap.style.display = 'none';
+    retryBtn.classList.remove('hidden');
+    changeLocationBtn.classList.remove('hidden');
+    retryBtn.focus();
+  }
+
+  var lastMethod = null; // 'gps' or { zip: '12345' }
+
+  function fetchWeather(lat, lon, locationText) {
     var url =
       'https://api.open-meteo.com/v1/forecast?latitude=' + lat +
       '&longitude=' + lon +
@@ -222,44 +445,131 @@
       .then(function (data) {
         var cur = data.current;
         if (!cur) throw new Error('No current weather in response');
-        render(cur.temperature_2m, cur.relative_humidity_2m);
+        render(cur.temperature_2m, cur.relative_humidity_2m, locationText);
       })
-      .catch(function (err) {
-        statusEl.textContent = 'Weather unavailable. Try again.';
-        showRetry();
+      .catch(function () {
+        showError('Weather unavailable. Try again.');
       });
   }
 
-  function start() {
-    statusEl.style.display = 'block';
+  function startWithGPS() {
+    lastMethod = 'gps';
+    showScreen('status');
+    resetStatusScreen();
     statusEl.textContent = 'Locating weather…';
-    sumEl.style.display = 'none';
-    labelEl.style.display = 'none';
-    breakdownEl.style.display = 'none';
-    dogWrap.style.display = 'none';
 
     if (!('geolocation' in navigator)) {
-      statusEl.textContent = 'Location not supported.';
-      showRetry();
+      showError('Location not supported.');
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       function (position) {
-        fetchWeather(position.coords.latitude, position.coords.longitude);
+        statusEl.textContent = 'Fetching weather…';
+        fetchWeather(position.coords.latitude, position.coords.longitude, 'Current location');
       },
       function (error) {
         var msg = 'Location unavailable.';
         if (error.code === 1) msg = 'Location permission denied.';
         else if (error.code === 3) msg = 'Location request timed out.';
-        statusEl.textContent = msg;
-        showRetry();
+        showError(msg);
       },
       { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
     );
   }
 
-  start();
+  function startWithZip(zip) {
+    lastMethod = { zip: zip };
+    showScreen('status');
+    resetStatusScreen();
+    statusEl.textContent = 'Looking up ZIP ' + zip + '…';
+
+    fetch('https://api.zippopotam.us/us/' + zip)
+      .then(function (res) {
+        if (!res.ok) throw new Error('Invalid ZIP');
+        return res.json();
+      })
+      .then(function (data) {
+        var place = data.places && data.places[0];
+        if (!place) throw new Error('Invalid ZIP');
+        var lat = place.latitude;
+        var lon = place.longitude;
+        var locationText = place['place name'] + ', ' + place['state abbreviation'];
+        statusEl.textContent = 'Fetching weather…';
+        fetchWeather(lat, lon, locationText);
+      })
+      .catch(function () {
+        showError('ZIP code not found. Try again.');
+      });
+  }
+
+  function retryLast() {
+    if (lastMethod === 'gps') {
+      startWithGPS();
+    } else if (lastMethod && lastMethod.zip) {
+      startWithZip(lastMethod.zip);
+    } else {
+      showScreen('choice');
+    }
+  }
+
+  retryBtn.addEventListener('click', retryLast);
+  changeLocationBtn.addEventListener('click', function () {
+    showScreen('choice');
+  });
+
+  // ---- Choice screen ----
+  document.getElementById('btn-mylocation').addEventListener('click', startWithGPS);
+  document.getElementById('btn-zip').addEventListener('click', function () {
+    zipDigits = '';
+    updateZipDisplay();
+    zipError.textContent = '\u00A0';
+    showScreen('keypad');
+  });
+
+  // ---- Keypad screen ----
+  function updateZipDisplay() {
+    var chars = [];
+    for (var i = 0; i < 5; i++) {
+      chars.push(i < zipDigits.length ? zipDigits[i] : '_');
+    }
+    zipDisplay.textContent = chars.join(' ');
+  }
+
+  function addDigit(d) {
+    if (zipDigits.length < 5) {
+      zipDigits += d;
+      updateZipDisplay();
+      zipError.textContent = '\u00A0';
+    }
+  }
+
+  ['0','1','2','3','4','5','6','7','8','9'].forEach(function (d) {
+    document.getElementById('k' + d).addEventListener('click', function () {
+      addDigit(d);
+    });
+  });
+
+  document.getElementById('kDel').addEventListener('click', function () {
+    zipDigits = zipDigits.slice(0, -1);
+    updateZipDisplay();
+    zipError.textContent = '\u00A0';
+  });
+
+  document.getElementById('kSubmit').addEventListener('click', function () {
+    if (zipDigits.length !== 5) {
+      zipError.textContent = 'Enter all 5 digits';
+      return;
+    }
+    startWithZip(zipDigits);
+  });
+
+  document.getElementById('kBack').addEventListener('click', function () {
+    showScreen('choice');
+  });
+
+  // ---- Init ----
+  showScreen('choice');
 })();
 </script>
 </body>
