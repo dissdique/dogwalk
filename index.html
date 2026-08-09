@@ -6,7 +6,8 @@
 <meta name="description" content="Shows local temperature + humidity as a mood dog for Meta Ray-Ban Display">
 <meta name="mrbd-web-app-capable" content="yes">
 <title>Dog Weather Index</title>
-<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=">
+<link rel="icon" href="https://github.com/dissdique.png">
+<link rel="apple-touch-icon" href="https://github.com/dissdique.png">
 <style>
   html, body {
     margin: 0;
@@ -39,13 +40,40 @@
 
   .hidden { display: none !important; }
 
+  .logo {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 14px;
+    box-shadow: 0 0 14px rgba(0, 212, 255, 0.55);
+    border: 2px solid #1a4a5c;
+  }
+
+  .header-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .logo-sm {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    border: 2px solid #1a4a5c;
+  }
+
   .title {
     font-size: 24px;
     font-weight: 700;
     color: #7fdcff;
-    margin-bottom: 28px;
     text-align: center;
   }
+
+  #screen-choice .title { margin-bottom: 0; }
 
   /* ---- Buttons ---- */
   .focusable {
@@ -76,7 +104,6 @@
     letter-spacing: 10px;
     color: #9fe8ff;
     margin-bottom: 6px;
-    min-height: 50px;
     text-align: center;
   }
 
@@ -91,21 +118,21 @@
   .keypad-grid {
     display: grid;
     grid-template-columns: repeat(3, 160px);
-    grid-auto-rows: 64px;
-    gap: 10px;
-    margin-bottom: 14px;
+    grid-auto-rows: 60px;
+    gap: 8px;
+    margin-bottom: 12px;
   }
 
   .key {
     width: 160px;
-    min-height: 64px;
-    font-size: 24px;
+    min-height: 60px;
+    font-size: 22px;
   }
 
   #kBack {
     width: 200px;
-    min-height: 56px;
-    font-size: 18px;
+    min-height: 50px;
+    font-size: 17px;
   }
 
   /* ---- Status / result screen ---- */
@@ -119,38 +146,39 @@
   }
 
   #sum-value {
-    font-size: 88px;
+    font-size: 80px;
     font-weight: 700;
     line-height: 1;
-    margin: 4px 0 2px 0;
+    margin: 2px 0 2px 0;
     text-shadow: 0 0 18px currentColor;
   }
 
   #sum-label {
-    font-size: 18px;
+    font-size: 16px;
     color: #9fe8ff;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     text-align: center;
   }
 
   #breakdown {
-    font-size: 18px;
+    font-size: 17px;
     color: #bff2ff;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     text-align: center;
   }
 
   #location-label {
-    font-size: 15px;
-    color: #6fb8cc;
+    font-size: 16px;
+    color: #6fe0ff;
+    font-weight: 600;
     margin-bottom: 10px;
     text-align: center;
   }
 
   #dog-wrap {
-    width: 240px;
-    height: 240px;
-    margin-bottom: 10px;
+    width: 210px;
+    height: 210px;
+    margin-bottom: 8px;
   }
 
   #status-buttons {
@@ -159,9 +187,9 @@
   }
 
   #status-buttons .focusable {
-    min-height: 64px;
-    padding: 12px 20px;
-    font-size: 18px;
+    min-height: 60px;
+    padding: 10px 18px;
+    font-size: 17px;
   }
 </style>
 </head>
@@ -170,14 +198,18 @@
 
   <!-- Screen 1: choose location method -->
   <div id="screen-choice" class="screen">
-    <div class="title">Dog Weather Index</div>
+    <img class="logo" src="https://github.com/dissdique.png" alt="logo">
+    <div class="title" style="margin-bottom: 28px;">Dog Weather Index</div>
     <button class="focusable big-btn" id="btn-mylocation">Use My Location</button>
     <button class="focusable big-btn" id="btn-zip">Enter ZIP Code</button>
   </div>
 
   <!-- Screen 2: on-screen numeric keypad (no system text input on MRBD) -->
   <div id="screen-keypad" class="screen hidden">
-    <div class="title">Enter ZIP Code</div>
+    <div class="header-row">
+      <img class="logo-sm" src="https://github.com/dissdique.png" alt="logo">
+      <div class="title">Enter ZIP Code</div>
+    </div>
     <div id="zip-display">_ _ _ _ _</div>
     <div id="zip-error">&nbsp;</div>
     <div class="keypad-grid">
@@ -199,6 +231,10 @@
 
   <!-- Screen 3: status / result -->
   <div id="screen-status" class="screen hidden">
+    <div class="header-row" id="status-header">
+      <img class="logo-sm" src="https://github.com/dissdique.png" alt="logo">
+      <div class="title" id="status-title">Dog Weather Index</div>
+    </div>
     <div id="status">Locating weather…</div>
     <div id="sum-value" style="display:none;">--</div>
     <div id="sum-label" style="display:none;">Temp + Humidity Index (°F + %)</div>
@@ -244,7 +280,6 @@
       }
     });
     currentScreen = name;
-    // Focus the first focusable element in the new screen
     var first = screens[name].querySelector('.focusable:not(.hidden):not([disabled])');
     if (first) first.focus();
   }
@@ -318,7 +353,7 @@
         e.preventDefault();
         return;
       default:
-        return; // don't preventDefault on unhandled keys
+        return;
     }
 
     if (currentScreen === 'keypad') {
@@ -353,7 +388,7 @@
     }
 
     return (
-      '<svg viewBox="0 0 280 280" width="240" height="240" xmlns="http://www.w3.org/2000/svg">' +
+      '<svg viewBox="0 0 280 280" width="210" height="210" xmlns="http://www.w3.org/2000/svg">' +
         '<path d="M 40 60 L 90 100 L 60 130 Z" fill="' + c.fur + '"/>' +
         '<path d="M 240 60 L 190 100 L 220 130 Z" fill="' + c.fur + '"/>' +
         '<circle cx="140" cy="140" r="95" fill="' + c.fur + '"/>' +
@@ -390,10 +425,8 @@
     breakdownEl.textContent =
       Math.round(tempF) + '°F temp + ' + Math.round(humidity) + '% humidity';
 
-    if (locationText) {
-      locationLabelEl.style.display = 'block';
-      locationLabelEl.textContent = locationText;
-    }
+    locationLabelEl.style.display = 'block';
+    locationLabelEl.textContent = locationText || 'Current location';
 
     dogWrap.style.display = 'block';
     dogWrap.innerHTML = dogSVG(mood);
@@ -430,14 +463,15 @@
 
   var lastMethod = null; // 'gps' or { zip: '12345' }
 
-  function fetchWeather(lat, lon, locationText) {
+  // Returns a promise resolving { tempF, humidity }
+  function getWeather(lat, lon) {
     var url =
       'https://api.open-meteo.com/v1/forecast?latitude=' + lat +
       '&longitude=' + lon +
       '&current=temperature_2m,relative_humidity_2m' +
       '&temperature_unit=fahrenheit';
 
-    fetch(url)
+    return fetch(url)
       .then(function (res) {
         if (!res.ok) throw new Error('Weather request failed');
         return res.json();
@@ -445,11 +479,30 @@
       .then(function (data) {
         var cur = data.current;
         if (!cur) throw new Error('No current weather in response');
-        render(cur.temperature_2m, cur.relative_humidity_2m, locationText);
-      })
-      .catch(function () {
-        showError('Weather unavailable. Try again.');
+        return { tempF: cur.temperature_2m, humidity: cur.relative_humidity_2m };
       });
+  }
+
+  // Returns a promise resolving a human-readable "City, ST" string (never rejects)
+  function getReverseGeocode(lat, lon) {
+    var url =
+      'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat +
+      '&longitude=' + lon + '&localityLanguage=en';
+
+    return fetch(url)
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (data) {
+        if (!data) return 'Current location';
+        var city = data.city || data.locality;
+        var regionCode = data.principalSubdivisionCode
+          ? data.principalSubdivisionCode.split('-').pop()
+          : null;
+        var region = regionCode || data.principalSubdivision;
+        if (city && region) return city + ', ' + region;
+        if (city) return city;
+        return 'Current location';
+      })
+      .catch(function () { return 'Current location'; });
   }
 
   function startWithGPS() {
@@ -465,8 +518,17 @@
 
     navigator.geolocation.getCurrentPosition(
       function (position) {
+        var lat = position.coords.latitude;
+        var lon = position.coords.longitude;
         statusEl.textContent = 'Fetching weather…';
-        fetchWeather(position.coords.latitude, position.coords.longitude, 'Current location');
+
+        Promise.all([getWeather(lat, lon), getReverseGeocode(lat, lon)])
+          .then(function (results) {
+            render(results[0].tempF, results[0].humidity, results[1]);
+          })
+          .catch(function () {
+            showError('Weather unavailable. Try again.');
+          });
       },
       function (error) {
         var msg = 'Location unavailable.';
@@ -496,7 +558,9 @@
         var lon = place.longitude;
         var locationText = place['place name'] + ', ' + place['state abbreviation'];
         statusEl.textContent = 'Fetching weather…';
-        fetchWeather(lat, lon, locationText);
+        return getWeather(lat, lon).then(function (w) {
+          render(w.tempF, w.humidity, locationText);
+        });
       })
       .catch(function () {
         showError('ZIP code not found. Try again.');
